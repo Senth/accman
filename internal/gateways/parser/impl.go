@@ -36,7 +36,7 @@ func (i *Impl) load() {
 	}
 }
 
-func (i Impl) Verification(path string) ([]models.Verification, error) {
+func (i Impl) Verification(path string) ([]models.VerificationInfo, error) {
 	output, err := i.Text(path)
 	if err != nil {
 		return nil, err
@@ -104,6 +104,8 @@ func consolidateErrors(errChannels ...chan error) (err error) {
 type parser struct {
 	Identifier string  `json:"identifier"`
 	Options    options `json:"options"`
+	// Prefix optional prefix that will be added to all verification names
+	Prefix string `json:"prefix"`
 	// Regexp containing date, name, and currency groups
 	Currency            string              `json:"currency"`
 	Regexp              string              `json:"regexp"`
@@ -125,20 +127,12 @@ const (
 )
 
 type verificationParser struct {
-	Identifier  string                  `json:"identifier"`
-	Name        string                  `json:"name"`
-	AccountFrom int                     `json:"accountFrom"`
-	AccountTo   int                     `json:"accountTo"`
-	Type        models.VerificationType `json:"type"`
-}
-
-type verificationInfo struct {
-	Date        string
-	Name        string
-	Type        models.VerificationType
-	AccountFrom int
-	AccountTo   int
-	Amount      models.Amount
+	Identifier    string                  `json:"identifier"`
+	Name          string                  `json:"name"`
+	AccountFrom   models.AccountNumber    `json:"accountFrom"`
+	AccountTo     models.AccountNumber    `json:"accountTo"`
+	Type          models.VerificationType `json:"type"`
+	Bidirectional bool                    `json:"bidirectional"`
 }
 
 type regexMatch struct {
@@ -147,7 +141,7 @@ type regexMatch struct {
 	Amount models.Amount `json:"amount"`
 }
 
-func (p parser) parse(output Output) ([]models.Verification, error) {
+func (p parser) parse(output Output) ([]models.VerificationInfo, error) {
 
 	text := p.getTextToUse(output)
 	matches, err := p.getMatches(text)
@@ -155,28 +149,43 @@ func (p parser) parse(output Output) ([]models.Verification, error) {
 		return nil, err
 	}
 
-	var vInfos []verificationInfo
+	var vInfos []models.VerificationInfo
 	for _, match := range matches {
 		vParser := p.VerificationParsers.find(match.Name)
 		if vParser == nil {
 			println("Skipping verification since no identifier could be matched for: " + match.Name)
+			continue
 		}
-		name := match.Name
-		if vParser.Name != "" {
-			name = vParser.Name
-		}
-		verification := verificationInfo{
-			Date:        match.Date,
-			Name:        name,
+
+		verification := models.VerificationInfo{
+			Date:        models.Date(match.Date),
+			Name:        p.getVerificationName(*vParser, match.Name),
 			Amount:      match.Amount,
 			Type:        vParser.Type,
 			AccountFrom: vParser.AccountFrom,
 			AccountTo:   vParser.AccountTo,
 		}
+
+		// Fix bidirectional verifications
+		if vParser.Bidirectional && verification.Amount.Amount < 0 {
+			verification.AccountTo, verification.AccountFrom = verification.AccountFrom, verification.AccountTo
+		}
+		verification.Amount = verification.Amount.Abs()
+
 		vInfos = append(vInfos, verification)
 	}
 
-	return nil, nil
+	return vInfos, nil
+}
+
+func (p parser) getVerificationName(vParser verificationParser, name string) string {
+	if vParser.Name != "" {
+		name = vParser.Name
+	}
+	if p.Prefix != "" {
+		name = p.Prefix + name
+	}
+	return name
 }
 
 func (p parser) getTextToUse(output Output) string {
@@ -229,17 +238,9 @@ func (p parser) getMatches(text string) ([]regexMatch, error) {
 
 func (v verificationParsers) find(name string) *verificationParser {
 	for _, parser := range v {
-		if parser.Identifier == name {
+		if strings.Contains(name, parser.Identifier) {
 			return &parser
 		}
 	}
 	return nil
-}
-
-func (i verificationInfo) Model() models.Verification {
-	return models.Verification{
-		Date: i.Date,
-		Name: i.Name,
-		Type: i.Type,
-	}
 }

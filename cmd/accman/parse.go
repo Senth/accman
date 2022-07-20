@@ -1,7 +1,8 @@
 package main
 
 import (
-	"github.com/Senth/accman/internal/parser"
+	"github.com/Senth/accman/internal/app"
+	"github.com/Senth/accman/internal/gateways/parser"
 	"github.com/spf13/cobra"
 	"log"
 )
@@ -56,10 +57,10 @@ var parseImportCmd = &cobra.Command{
 }
 
 func parseImport(cmd *cobra.Command, args []string) {
-	p := parser.NewParser()
+	a := app.NewApp()
 
 	for _, path := range args {
-		_, err := p.Verification(path)
+		err := a.VerificationParse(path)
 		if err != nil {
 			log.Fatalln(err)
 		}

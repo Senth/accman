@@ -1,6 +1,8 @@
 package models
 
 import (
+	"fmt"
+	"strconv"
 	"strings"
 )
 
@@ -35,4 +37,17 @@ func CurrencyFromString(code string) CurrencyCode {
 		}
 	}
 	return currencyCodeDefault
+}
+
+func (c *CurrencyCode) MarshalJSON() ([]byte, error) {
+	return []byte(fmt.Sprintf(`"%s"`, c.Code)), nil
+}
+
+func (c *CurrencyCode) UnmarshalJSON(data []byte) error {
+	code, err := strconv.Unquote(string(data))
+	if err != nil {
+		return err
+	}
+	*c = CurrencyFromString(code)
+	return nil
 }

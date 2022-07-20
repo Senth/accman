@@ -8,10 +8,10 @@ import (
 )
 
 type Amount struct {
-	Currency     CurrencyCode `json:"currency"`
+	Currency     CurrencyCode `json:"currency,omitempty"`
 	Amount       int64        `json:"amount"`
-	LocalAmount  int64        `json:"localAmount"`
-	ExchangeRate float64      `json:"exchangeRate"`
+	LocalAmount  int64        `json:"localAmount,omitempty"`
+	ExchangeRate float64      `json:"exchangeRate,omitempty"`
 }
 
 var (
@@ -58,4 +58,20 @@ func ParseAmount(amount string, currency CurrencyCode) Amount {
 		Currency: currency,
 		Amount:   parsedAmount,
 	}
+}
+
+func (a Amount) Negate() Amount {
+	return Amount{
+		Currency:    a.Currency,
+		Amount:      -a.Amount,
+		LocalAmount: -a.LocalAmount,
+	}
+}
+
+// Abs returns the absolute value of the amount.
+func (a Amount) Abs() Amount {
+	if a.Amount < 0 {
+		return a.Negate()
+	}
+	return a
 }
