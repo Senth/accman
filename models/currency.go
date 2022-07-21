@@ -26,7 +26,7 @@ var (
 	CurrencyCodeEUR     = newCurrencyCode("EUR", 2)
 	CurrencyCodeUSD     = newCurrencyCode("USD", 2)
 	CurrencyCodeSEK     = newCurrencyCode("SEK", 2)
-	currencyCodeDefault = CurrencyCodeSEK
+	CurrencyCodeDefault = CurrencyCodeSEK
 )
 
 func CurrencyFromString(code string) CurrencyCode {
@@ -36,7 +36,7 @@ func CurrencyFromString(code string) CurrencyCode {
 			return currency
 		}
 	}
-	return currencyCodeDefault
+	return CurrencyCodeDefault
 }
 
 func (c *CurrencyCode) MarshalJSON() ([]byte, error) {

@@ -75,3 +75,11 @@ func (a Amount) Abs() Amount {
 	}
 	return a
 }
+
+// InLocalCurrency return the amount in the local currency
+func (a Amount) InLocalCurrency() int64 {
+	if a.LocalAmount != 0 {
+		return a.LocalAmount
+	}
+	return a.Amount
+}

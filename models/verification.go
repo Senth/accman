@@ -1,6 +1,9 @@
 package models
 
-import "sort"
+import (
+	"fmt"
+	"sort"
+)
 
 type Verification struct {
 	Name         string           `json:"name"`
@@ -40,6 +43,20 @@ type VerificationInfo struct {
 }
 
 type Verifications []Verification
+
+func (v Verification) ValidateTransactions() error {
+	sum := int64(0)
+	for _, t := range v.Transactions {
+		if !t.IsDeleted() {
+			sum += t.Amount.InLocalCurrency()
+		}
+	}
+
+	if sum != 0 {
+		return fmt.Errorf("verification %d has a sum of %d", v.Number, sum)
+	}
+	return nil
+}
 
 func (v Verifications) SortByDate() {
 	sort.Slice(v, func(i, j int) bool {

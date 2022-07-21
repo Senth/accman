@@ -1,5 +1,7 @@
 package models
 
+import "sort"
+
 type AccountNumber int
 
 type Account struct {
@@ -14,4 +16,12 @@ type Account struct {
 type AccountBalance struct {
 	AccountNumber AccountNumber `json:"accountNumber"`
 	Balance       int64         `json:"balance"`
+}
+
+type AccountBalances []AccountBalance
+
+func (a AccountBalances) SortByAccountNumber() {
+	sort.Slice(a, func(i, j int) bool {
+		return a[i].AccountNumber < a[j].AccountNumber
+	})
 }

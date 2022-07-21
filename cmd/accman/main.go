@@ -15,6 +15,7 @@ var rootCmd = &cobra.Command{
 
 func init() {
 	initParse(rootCmd)
+	initSie(rootCmd)
 }
 
 func main() {

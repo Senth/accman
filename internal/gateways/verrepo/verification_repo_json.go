@@ -22,7 +22,7 @@ func NewJSONImpl() VerRepo {
 	return i
 }
 
-func (i *impl) Add(verification ...models.Verification) error {
+func (i *impl) AddVerification(verification ...models.Verification) error {
 	for _, v := range verification {
 		fy := i.getFiscalYear(v.Date)
 		if fy == nil {
@@ -163,10 +163,13 @@ func getFiscalYearBackupName(fy *models.FiscalYear) string {
 }
 
 func backupFiscalYear(fy *models.FiscalYear) {
-	createBackupDir()
-	err := os.Rename(getFiscalYearFilename(fy), getFiscalYearBackupName(fy))
-	if err != nil {
-		log.Fatalf("failed to backup fiscal year: %v", err)
+	// Only backup if a previous file exists
+	if _, err := os.Stat(getFiscalYearFilename(fy)); err == nil {
+		createBackupDir()
+		err := os.Rename(getFiscalYearFilename(fy), getFiscalYearBackupName(fy))
+		if err != nil {
+			log.Fatalf("failed to backup fiscal year: %v", err)
+		}
 	}
 }
 
@@ -175,4 +178,17 @@ func createBackupDir() {
 	if err != nil {
 		log.Fatalf("failed to create backup directory: %v", err)
 	}
+}
+
+func (i *impl) AddFiscalYear(fy models.FiscalYear) error {
+	for _, f := range i.fys {
+		if f.From.Year() == fy.From.Year() {
+			return fmt.Errorf("fiscal year already exists: %v", fy.From.Year())
+		}
+	}
+
+	fy.Changed = true
+	i.fys = append(i.fys, &fy)
+	i.save()
+	return nil
 }

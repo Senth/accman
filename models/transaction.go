@@ -4,7 +4,6 @@ type Transaction struct {
 	AccountNumber AccountNumber `json:"accountNumber"`
 	Amount        Amount        `json:"amount"`
 	Created       Date          `json:"created,omitempty"`
-	Modified      Date          `json:"modified,omitempty"`
 	Deleted       Date          `json:"deleted,omitempty"`
 }
 
@@ -14,6 +13,17 @@ func NewTransaction(accountNumber AccountNumber, amount Amount) Transaction {
 		AccountNumber: accountNumber,
 		Amount:        amount,
 		Created:       DateNow(),
-		Modified:      DateNow(),
 	}
+}
+
+func (t Transaction) IsDeleted() bool {
+	return t.Deleted != ""
+}
+
+func (t Transaction) IsBalance() bool {
+	return t.AccountNumber < 3000
+}
+
+func (t Transaction) IsResult() bool {
+	return t.AccountNumber >= 3000
 }

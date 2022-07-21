@@ -4,7 +4,11 @@ import "time"
 
 type Date string
 
-// DateNow Get today's date
+func DateFromTime(t time.Time) Date {
+	return Date(t.Format("2006-01-02"))
+}
+
+// DateNow InLocalCurrency today's date
 func DateNow() Date {
 	return Date(time.Now().Format("2006-01-02"))
 }

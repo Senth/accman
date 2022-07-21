@@ -3,6 +3,7 @@ package verrepo
 import "github.com/Senth/accman/models"
 
 type VerRepo interface {
-	Add(verification ...models.Verification) error
+	AddVerification(verification ...models.Verification) error
+	AddFiscalYear(fiscalYear models.FiscalYear) error
 	GetAll() ([]models.FiscalYear, error)
 }

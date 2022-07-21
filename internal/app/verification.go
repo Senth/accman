@@ -20,7 +20,7 @@ func (i impl) VerificationAdd(vInfos []models.VerificationInfo) error {
 		accountFrom := i.getAccount(vInfo.AccountFrom)
 		accountTo := i.getAccount(vInfo.AccountTo)
 		ver.Transactions = i.createTransactions(accountFrom, accountTo, vInfo.Type, vInfo.Amount)
-		err := i.verRepo.Add(ver)
+		err := i.verRepo.AddVerification(ver)
 		if err != nil {
 			return err
 		}
