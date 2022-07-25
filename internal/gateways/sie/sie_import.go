@@ -171,7 +171,7 @@ func (i *importer) addTransaction(line string) {
 	transaction := models.Transaction{
 		AccountNumber: models.AccountNumber(accountNumber),
 		Amount:        amount,
-		Created:       i.ver.DateFiled,
+		Date:          i.ver.DateFiled,
 	}
 
 	i.ver.Transactions = append(i.ver.Transactions, transaction)
@@ -193,19 +193,16 @@ func (i *importer) addEditedTransaction(line string) {
 
 	date := parseDate(matches[4])
 
-	createdDate := i.ver.DateFiled
-	deletedDate := models.Date("")
+	deleted := false
 	if Type == "B" {
-		deletedDate = date
-	} else if Type == "R" {
-		createdDate = date
+		deleted = true
 	}
 
 	transaction := models.Transaction{
 		AccountNumber: models.AccountNumber(accountNumber),
 		Amount:        amount,
-		Created:       createdDate,
-		Deleted:       deletedDate,
+		Date:          date,
+		Deleted:       deleted,
 	}
 
 	i.ver.Transactions = append(i.ver.Transactions, transaction)

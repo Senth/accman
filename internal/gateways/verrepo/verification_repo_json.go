@@ -29,6 +29,11 @@ func (i *impl) AddVerification(verification ...models.Verification) error {
 			log.Fatalf("failed to find fiscal year for date: %v", v.Date)
 		}
 
+		if fy.Locked {
+			log.Println("fiscal year is locked, skipping")
+			continue
+		}
+
 		fy.AddVerification(v)
 	}
 
@@ -37,8 +42,8 @@ func (i *impl) AddVerification(verification ...models.Verification) error {
 	return nil
 }
 
-func (i impl) GetAll() (fys []models.FiscalYear, err error) {
-	fys = make([]models.FiscalYear, len(i.fys))
+func (i impl) GetAll() (fys models.FiscalYears, err error) {
+	fys = make(models.FiscalYears, len(i.fys))
 	for i, fy := range i.fys {
 		fys[i] = *fy
 	}
@@ -143,6 +148,11 @@ func (i *impl) loadFiscalYears(filepath string) {
 	i.fys = append(i.fys, &fy)
 }
 
+func (i impl) GetFiscalYear(year string) *models.FiscalYear {
+	date := models.Date(year + "-01-01")
+	return i.getFiscalYear(date)
+}
+
 func (i impl) getFiscalYear(date models.Date) *models.FiscalYear {
 	for _, fy := range i.fys {
 		if date.Between(fy.From, fy.To) {
@@ -191,4 +201,16 @@ func (i *impl) AddFiscalYear(fy models.FiscalYear) error {
 	i.fys = append(i.fys, &fy)
 	i.save()
 	return nil
+}
+
+func (i *impl) UpdateFiscalYear(fy models.FiscalYear) error {
+	for j, f := range i.fys {
+		if f.From.Year() == fy.From.Year() {
+			i.fys[j] = &fy
+			saveFiscalYear(&fy)
+			return nil
+		}
+	}
+
+	return fmt.Errorf("fiscal year does not exist: %v", fy.From.Year())
 }

@@ -7,5 +7,5 @@ type Importer interface {
 }
 
 type Exporter interface {
-	Export(all []models.FiscalYear, year string, path string) error
+	Export(fys models.FiscalYears, year string, path string) error
 }

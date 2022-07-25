@@ -27,8 +27,14 @@ const (
 	VerificationTypeUnknown VerificationType = 0
 )
 
-func (t VerificationType) Contains(other VerificationType) bool {
-	return t&other > 0
+// Contains return true if all the types is part of this type
+func (t VerificationType) Contains(other ...VerificationType) bool {
+	for _, o := range other {
+		if t&o == 0 {
+			return false
+		}
+	}
+	return true
 }
 
 // VerificationInfo shorthand information for a verification
@@ -45,9 +51,9 @@ type VerificationInfo struct {
 type Verifications []Verification
 
 func (v Verification) ValidateTransactions() error {
-	sum := int64(0)
+	sum := AmountValue(0)
 	for _, t := range v.Transactions {
-		if !t.IsDeleted() {
+		if !t.Deleted {
 			sum += t.Amount.InLocalCurrency()
 		}
 	}
@@ -58,8 +64,23 @@ func (v Verification) ValidateTransactions() error {
 	return nil
 }
 
+func (v *Verification) Commit(number int) {
+	v.Number = number
+	v.DateFiled = DateNow()
+}
+
 func (v Verifications) SortByDate() {
 	sort.Slice(v, func(i, j int) bool {
 		return v[i].Date.Before(v[j].Date)
 	})
+}
+
+func (v Verifications) GetNextNumber() int {
+	max := 0
+	for _, v := range v {
+		if v.Number > max {
+			max = v.Number
+		}
+	}
+	return max + 1
 }

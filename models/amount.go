@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"math"
 	"regexp"
 	"strconv"
@@ -9,10 +10,12 @@ import (
 
 type Amount struct {
 	Currency     CurrencyCode `json:"currency,omitempty"`
-	Amount       int64        `json:"amount"`
-	LocalAmount  int64        `json:"localAmount,omitempty"`
+	Amount       AmountValue  `json:"amount"`
+	LocalAmount  AmountValue  `json:"localAmount,omitempty"`
 	ExchangeRate float64      `json:"exchangeRate,omitempty"`
 }
+
+type AmountValue int64
 
 var (
 	amountParseRegexp = regexp.MustCompile(`^(-?\d{0,3})?[. ,']?(-?\d{0,3})[.,](\d{2})$|^(-?\d{0,3})?[. ,']?(\d{0,3})$`)
@@ -56,7 +59,7 @@ func ParseAmount(amount string, currency CurrencyCode) Amount {
 
 	return Amount{
 		Currency: currency,
-		Amount:   parsedAmount,
+		Amount:   AmountValue(parsedAmount),
 	}
 }
 
@@ -77,9 +80,23 @@ func (a Amount) Abs() Amount {
 }
 
 // InLocalCurrency return the amount in the local currency
-func (a Amount) InLocalCurrency() int64 {
+func (a Amount) InLocalCurrency() AmountValue {
 	if a.LocalAmount != 0 {
 		return a.LocalAmount
 	}
 	return a.Amount
+}
+
+func (a Amount) FormatInLocalCurrency() string {
+	return a.InLocalCurrency().Format(CurrencyCodeDefault)
+}
+
+func (a AmountValue) Format(code CurrencyCode) string {
+	divider := int64(math.Pow10(int(code.Decimals)))
+	whole := int64(a) / divider
+	penny := int64(a) % divider
+	if penny < 0 {
+		penny *= -1
+	}
+	return fmt.Sprintf("%d.%02d", whole, penny)
 }

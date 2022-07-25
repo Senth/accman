@@ -14,10 +14,14 @@ var sieCmd = &cobra.Command{
 	},
 }
 
+var outputPath string
+
 func initSie(rootCmd *cobra.Command) {
 	rootCmd.AddCommand(sieCmd)
 	sieCmd.AddCommand(sieImportCmd)
-	//sieCmd.AddCommand(sieExportCmd)
+	sieCmd.AddCommand(sieExportCmd)
+
+	sieExportCmd.Flags().StringVar(&outputPath, "output", "", "Output path instead of default 'year.se'")
 }
 
 var sieImportCmd = &cobra.Command{
@@ -35,5 +39,21 @@ func sieImport(cmd *cobra.Command, args []string) {
 		if err != nil {
 			log.Fatalln(err)
 		}
+	}
+}
+
+var sieExportCmd = &cobra.Command{
+	Use:   "export year",
+	Short: "Export a fiscal year to a SIE file",
+	Args:  cobra.ExactArgs(1),
+	Run:   sieExport,
+}
+
+func sieExport(cmd *cobra.Command, args []string) {
+	a := app.NewApp()
+
+	err := a.SIEExport(args[0], outputPath)
+	if err != nil {
+		log.Fatalln(err)
 	}
 }

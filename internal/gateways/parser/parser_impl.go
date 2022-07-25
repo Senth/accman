@@ -13,18 +13,18 @@ import (
 
 const filename = "parser.json"
 
-type Impl struct {
+type impl struct {
 	parsers []parser
 }
 
 func NewParser() Parser {
-	p := &Impl{}
+	p := &impl{}
 	p.load()
 	return p
 }
 
 // load the parsers from the JSON file
-func (i *Impl) load() {
+func (i *impl) load() {
 	file, err := os.Open(filename)
 	if err != nil {
 		log.Panicf("failed to open parser file: %v", err)
@@ -36,30 +36,37 @@ func (i *Impl) load() {
 	}
 }
 
-func (i Impl) Verification(path string) ([]models.VerificationInfo, error) {
+func (i impl) Verification(path string) (vInfos []models.VerificationInfo, err error) {
 	output, err := i.Text(path)
 	if err != nil {
 		return nil, err
 	}
 
-	parser := i.getParser(output.BodyRaw)
-	if parser == nil {
+	parsers := i.getParsers(output.BodyRaw)
+	if len(parsers) == 0 {
 		return nil, &MissingParserError{}
 	}
 
-	return parser.parse(output)
+	for _, p := range parsers {
+		infos, err := p.parse(output)
+		if err != nil {
+			return nil, err
+		}
+		vInfos = append(vInfos, infos...)
+	}
+	return
 }
 
-func (i Impl) getParser(text string) *parser {
+func (i impl) getParsers(text string) (parsers []parser) {
 	for _, parser := range i.parsers {
 		if strings.Contains(text, parser.Identifier) {
-			return &parser
+			parsers = append(parsers, parser)
 		}
 	}
-	return nil
+	return
 }
 
-func (i Impl) Text(path string) (Output, error) {
+func (i impl) Text(path string) (Output, error) {
 	rawChan, rawErrChan := parsePdf(path, false)
 	layoutChan, layoutErrChan := parsePdf(path, true)
 
